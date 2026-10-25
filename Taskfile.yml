@@ -1,0 +1,29 @@
+version: "3"
+
+env:
+  CGO_CFLAGS: -Wno-deprecated-declarations
+
+tasks:
+  build:
+    cmds:
+      - go build -o htopx .
+
+  build:darwin:
+    env:
+      GOOS: darwin
+      GOARCH: arm64
+      CGO_ENABLED: "0"
+    cmds:
+      - go build -o htopx-darwin-arm64 .
+
+  run:
+    deps: [build]
+    cmds:
+      - ./htopx {{.CLI_ARGS}}
+
+  lint:
+    cmds:
+      - for: [linux, darwin]
+        cmd: GOOS={{.ITEM}} golangci-lint run --config ~/.config/golangci-lint/config.yaml ./...
+      - for: [linux, darwin]
+        cmd: GOOS={{.ITEM}} govulncheck ./...
