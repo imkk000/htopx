@@ -46,6 +46,7 @@ type Snapshot struct {
 	Cores         []CPUUsage
 	Mem           MemInfo
 	Load          LoadAvg
+	Sensors       Sensors
 	Uptime        time.Duration
 	Procs         []Process
 	Tasks         int
@@ -93,11 +94,12 @@ func (s *Sampler) Sample() (Snapshot, error) {
 		return Snapshot{}, err
 	}
 	snap := Snapshot{
-		CPU:    cpuUsage(s.prevTotal, total),
-		Cores:  make([]CPUUsage, len(cores)),
-		Mem:    mem,
-		Load:   s.plat.loadAvg(),
-		Uptime: s.plat.uptime(),
+		CPU:     cpuUsage(s.prevTotal, total),
+		Cores:   make([]CPUUsage, len(cores)),
+		Mem:     mem,
+		Load:    s.plat.loadAvg(),
+		Sensors: s.plat.sensors(),
+		Uptime:  s.plat.uptime(),
 	}
 	for i, c := range cores {
 		var prev cpuTicks

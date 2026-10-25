@@ -136,13 +136,6 @@ func gpuInfo(kind gpu.Kind, d gpu.Device, prefix string) [3]string {
 	if d.BusID != "" {
 		name += "  " + paint(cDim, d.BusID)
 	}
-	temp := cGreen
-	switch {
-	case d.Temp >= 85:
-		temp = cBoldRed
-	case d.Temp >= 70:
-		temp = cYellow
-	}
 	fan := "N/A"
 	if d.HasFan {
 		fan = fmt.Sprintf("%d%%", d.Fan)
@@ -151,13 +144,37 @@ func gpuInfo(kind gpu.Kind, d gpu.Device, prefix string) [3]string {
 	if d.PState >= 0 {
 		perf = fmt.Sprintf("P%d", d.PState)
 	}
-	status := paint(cCyan, "Temp: ") + paint("1;"+temp, fmt.Sprintf("%dC", d.Temp)) + "  " +
+	status := paint(cCyan, "Temp: ") + paint(tempColor(float64(d.Temp), 70, 85), fmt.Sprintf("%dC", d.Temp)) + "  " +
 		kv("Fan", fan) + "  " + kv("Perf", perf) + "  " +
 		kv("Enc", fmt.Sprintf("%d%%", d.EncUtil)) + "  " + kv("Dec", fmt.Sprintf("%d%%", d.DecUtil))
 	clocks := kv("SM", fmt.Sprintf("%d/%dMHz", d.ClockSM, d.ClockSMMax)) + "  " +
 		kv("Mem", fmt.Sprintf("%d/%dMHz", d.ClockMem, d.ClockMemMax)) + "  " +
 		kv("MemBW", fmt.Sprintf("%d%%", d.MemUtil))
 	return [3]string{name, status, clocks}
+}
+
+func tempColor(t, warn, crit float64) string {
+	switch {
+	case t >= crit:
+		return cBoldRed
+	case t >= warn:
+		return "1;" + cYellow
+	}
+	return cBoldGreen
+}
+
+func sensorsLine(s sysinfo.Sensors) string {
+	var parts []string
+	if s.HasCPUTemp {
+		parts = append(parts, paint(cCyan, "CPU: ")+paint(tempColor(s.CPUTemp, 70, 85), fmt.Sprintf("%.0fC", s.CPUTemp)))
+	}
+	if s.HasCPUFan {
+		parts = append(parts, kv("Fan", fmt.Sprintf("%drpm", s.CPUFanRPM)))
+	}
+	if s.HasRAMTemp {
+		parts = append(parts, paint(cCyan, "RAM: ")+paint(tempColor(s.RAMTemp, 55, 75), fmt.Sprintf("%.0fC", s.RAMTemp)))
+	}
+	return strings.Join(parts, "  ")
 }
 
 func (m *Model) headerLines() []string {
@@ -215,7 +232,7 @@ func (m *Model) headerLines() []string {
 	lines = append(lines,
 		pair(memMeter(half, snap.Mem), tasks),
 		pair(swapMeter(half, snap.Mem), load),
-		pair("", uptime),
+		pair(sensorsLine(snap.Sensors), uptime),
 	)
 	if driver != "" {
 		lines = append(lines, pair(driver, ""))

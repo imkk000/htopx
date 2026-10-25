@@ -16,6 +16,7 @@ var helpLines = []string{
 	"Mem bar:  [used/shared/buffers/cache            used/total]",
 	"Swp bar:  [used/cache                           used/total]",
 	"GPU bars: GPU utilization, VRM memory, PWR power draw/cap",
+	"Sensors:  CPU package temp, CPU fan speed, RAM temp (hottest DIMM)",
 	"",
 	"   Arrows PgUp PgDn Home End: move selection    Mouse: click to select, header to sort",
 	"   Tab: switch Main / GPU process view",
