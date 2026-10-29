@@ -177,6 +177,17 @@ func sensorsLine(s sysinfo.Sensors) string {
 	return strings.Join(parts, "  ")
 }
 
+func (m *Model) driverLine() string {
+	if m.gpus.Driver == "" {
+		return ""
+	}
+	driver := paint(cCyan, "Driver: ") + paint(cBold, m.gpus.Driver)
+	if m.gpus.CUDA != "" {
+		driver += paint(cCyan, "  CUDA: ") + paint(cBold, m.gpus.CUDA)
+	}
+	return driver
+}
+
 func (m *Model) headerLines() []string {
 	w := m.width
 	snap := m.sys
@@ -218,13 +229,7 @@ func (m *Model) headerLines() []string {
 	load := paint(cCyan, "Load average: ") + paint(cBold, fmt.Sprintf("%.2f ", snap.Load[0])) +
 		paint(cCyan, fmt.Sprintf("%.2f ", snap.Load[1])) + paint(cCyan, fmt.Sprintf("%.2f", snap.Load[2]))
 	uptime := paint(cCyan, "Uptime: ") + paint(cBold, formatUptime(int64(snap.Uptime.Seconds())))
-	var driver string
-	if m.gpus.Driver != "" {
-		driver = paint(cCyan, "Driver: ") + paint(cBold, m.gpus.Driver)
-		if m.gpus.CUDA != "" {
-			driver += paint(cCyan, "  CUDA: ") + paint(cBold, m.gpus.CUDA)
-		}
-	}
+	driver := m.driverLine()
 
 	pair := func(left, right string) string {
 		return " " + fit(left, half) + "  " + right
@@ -232,10 +237,10 @@ func (m *Model) headerLines() []string {
 	lines = append(lines,
 		pair(memMeter(half, snap.Mem), tasks),
 		pair(swapMeter(half, snap.Mem), load),
-		pair(driver, uptime),
+		pair("", uptime),
 	)
-	if sensors := sensorsLine(snap.Sensors); sensors != "" {
-		lines = append(lines, pair("", sensors))
+	if sensors := sensorsLine(snap.Sensors); driver != "" || sensors != "" {
+		lines = append(lines, pair(driver, sensors))
 	}
 	for _, d := range m.gpus.Devices {
 		var prefix string
