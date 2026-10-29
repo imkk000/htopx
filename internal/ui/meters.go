@@ -232,10 +232,10 @@ func (m *Model) headerLines() []string {
 	lines = append(lines,
 		pair(memMeter(half, snap.Mem), tasks),
 		pair(swapMeter(half, snap.Mem), load),
-		pair(sensorsLine(snap.Sensors), uptime),
+		pair(driver, uptime),
 	)
-	if driver != "" {
-		lines = append(lines, pair(driver, ""))
+	if sensors := sensorsLine(snap.Sensors); sensors != "" {
+		lines = append(lines, pair("", sensors))
 	}
 	for _, d := range m.gpus.Devices {
 		var prefix string
