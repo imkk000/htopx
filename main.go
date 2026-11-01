@@ -16,6 +16,7 @@ func main() {
 	tree := flag.Bool("t", false, "start in tree view")
 	hideThreads := flag.Bool("H", false, "hide user threads")
 	kernel := flag.Bool("K", false, "show kernel threads")
+	mini := flag.Bool("m", false, "start in mini mode (totals and top consumers only)")
 	noGPU := flag.Bool("no-gpu", false, "disable NVIDIA GPU monitoring")
 	flag.Parse()
 	log.SetFlags(0)
@@ -26,6 +27,7 @@ func main() {
 		ShowThreads: !*hideThreads,
 		ShowKernel:  *kernel,
 		Tree:        *tree,
+		Mini:        *mini,
 	}
 	var monitor *gpu.Monitor
 	if !*noGPU {

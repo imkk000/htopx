@@ -220,28 +220,46 @@ func (m *Model) headerLines() []string {
 	}
 
 	half := (w - 3) / 2
+	driver := m.driverLine()
+	lines = append(lines,
+		pair(half, memMeter(half, snap.Mem), tasksLine(snap)),
+		pair(half, swapMeter(half, snap.Mem), loadLine(snap)),
+		pair(half, "", uptimeLine(snap)),
+	)
+	if sensors := sensorsLine(snap.Sensors); driver != "" || sensors != "" {
+		lines = append(lines, pair(half, driver, sensors))
+	}
+	lines = append(lines, m.gpuLines(half)...)
+	for i, l := range lines {
+		lines[i] = ansi.Truncate(l, w, "")
+	}
+	return lines
+}
+
+func pair(half int, left, right string) string {
+	return " " + fit(left, half) + "  " + right
+}
+
+func tasksLine(snap sysinfo.Snapshot) string {
 	tasks := paint(cCyan, "Tasks: ") + paint(cBold, strconv.Itoa(snap.Tasks)) + paint(cCyan, ", ") +
 		paint(cBoldGreen, strconv.Itoa(snap.UserThreads)) + paint(cCyan, " thr")
 	if snap.KernelThreads > 0 {
 		tasks += paint(cDim, ", "+strconv.Itoa(snap.KernelThreads)+" kthr")
 	}
-	tasks += paint(cCyan, "; ") + paint(cBoldGreen, strconv.Itoa(snap.Running)) + paint(cCyan, " running")
-	load := paint(cCyan, "Load average: ") + paint(cBold, fmt.Sprintf("%.2f ", snap.Load[0])) +
-		paint(cCyan, fmt.Sprintf("%.2f ", snap.Load[1])) + paint(cCyan, fmt.Sprintf("%.2f", snap.Load[2]))
-	uptime := paint(cCyan, "Uptime: ") + paint(cBold, formatUptime(int64(snap.Uptime.Seconds())))
-	driver := m.driverLine()
+	return tasks + paint(cCyan, "; ") + paint(cBoldGreen, strconv.Itoa(snap.Running)) + paint(cCyan, " running")
+}
 
-	pair := func(left, right string) string {
-		return " " + fit(left, half) + "  " + right
-	}
-	lines = append(lines,
-		pair(memMeter(half, snap.Mem), tasks),
-		pair(swapMeter(half, snap.Mem), load),
-		pair("", uptime),
-	)
-	if sensors := sensorsLine(snap.Sensors); driver != "" || sensors != "" {
-		lines = append(lines, pair(driver, sensors))
-	}
+func loadLine(snap sysinfo.Snapshot) string {
+	return paint(cCyan, "Load average: ") + paint(cBold, fmt.Sprintf("%.2f ", snap.Load[0])) +
+		paint(cCyan, fmt.Sprintf("%.2f ", snap.Load[1])) + paint(cCyan, fmt.Sprintf("%.2f", snap.Load[2]))
+}
+
+func uptimeLine(snap sysinfo.Snapshot) string {
+	return paint(cCyan, "Uptime: ") + paint(cBold, formatUptime(int64(snap.Uptime.Seconds())))
+}
+
+func (m *Model) gpuLines(half int) []string {
+	lines := make([]string, 0, 3*len(m.gpus.Devices))
 	for _, d := range m.gpus.Devices {
 		var prefix string
 		if len(m.gpus.Devices) > 1 {
@@ -249,11 +267,8 @@ func (m *Model) headerLines() []string {
 		}
 		bars, info := gpuMeters(m.gpus.Kind, half, d), gpuInfo(m.gpus.Kind, d, prefix)
 		for i := range 3 {
-			lines = append(lines, pair(bars[i], info[i]))
+			lines = append(lines, pair(half, bars[i], info[i]))
 		}
-	}
-	for i, l := range lines {
-		lines[i] = ansi.Truncate(l, w, "")
 	}
 	return lines
 }

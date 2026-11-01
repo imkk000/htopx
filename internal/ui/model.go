@@ -42,6 +42,7 @@ type Options struct {
 	ShowThreads bool
 	ShowKernel  bool
 	Tree        bool
+	Mini        bool
 }
 
 type Model struct {
@@ -58,6 +59,7 @@ type Model struct {
 
 	tab         tab
 	mode        mode
+	mini        bool
 	sortBy      sortKey
 	sortDesc    bool
 	tree        bool
@@ -82,6 +84,7 @@ func New(sampler *sysinfo.Sampler, monitor *gpu.Monitor, opts Options) *Model {
 		sortBy:      sortCPU,
 		sortDesc:    true,
 		tree:        opts.Tree,
+		mini:        opts.Mini,
 		showThreads: opts.ShowThreads,
 		showKernel:  opts.ShowKernel,
 		width:       80,
@@ -206,6 +209,9 @@ func (m *Model) handleKey(k tea.KeyPressMsg) tea.Cmd {
 
 	if key == "q" || key == "f10" {
 		return tea.Quit
+	}
+	if m.mini && key != "m" {
+		return nil
 	}
 	if action, ok := keyActions[key]; ok {
 		action(m)
@@ -391,6 +397,7 @@ var keyActions = func() map[string]func(m *Model) {
 	bindKeys(a, func(m *Model) { m.findNext(m.search, m.sel+1) }, "n")
 	bindKeys(a, func(m *Model) { m.mode = modeFilter }, "f4", "\\")
 	bindKeys(a, toggle(func(m *Model) *bool { return &m.tree }), "f5", "t")
+	bindKeys(a, toggle(func(m *Model) *bool { return &m.mini }), "m")
 	bindKeys(a, toggle(func(m *Model) *bool { return &m.sortDesc }), "I")
 	bindKeys(a, toggle(func(m *Model) *bool { return &m.showThreads }), "H")
 	bindKeys(a, toggle(func(m *Model) *bool { return &m.showKernel }), "K")

@@ -24,6 +24,7 @@ var helpLines = []string{
 	"   F5 t: tree view                             F6 > .: next sort column   < ,: previous",
 	"   P: sort CPU%   M: sort MEM%   T: sort TIME   N: sort PID   U: sort GPU%   V: sort GMEM",
 	"   I: invert sort order                       F: follow selected process",
+	"   m: toggle mini mode (totals and top consumers only)",
 	"   H: toggle user threads                      K: toggle kernel threads",
 	"   F7 ]: nice - (higher priority)              F8 [: nice + (lower priority)",
 	"   F9 k: send signal                           F10 q: quit",
@@ -64,6 +65,13 @@ func (m *Model) pageSize() int {
 }
 
 func (m *Model) View() tea.View {
+	if m.mini {
+		lines := m.miniLines()
+		v := tea.NewView(strings.Join(lines[:min(len(lines), max(m.height, 0))], "\n"))
+		v.AltScreen = true
+		v.WindowTitle = "htopx"
+		return v
+	}
 	lines := m.headerLines()
 	lines = append(lines, "", m.tabBar(), m.columnHeader())
 	if m.mode == modeHelp {
@@ -90,7 +98,7 @@ func (m *Model) tabBar() string {
 		}
 		return paint(fg+";"+bg, "[") + paint(cBlack+";"+bg, name) + paint(fg+";"+bg, "]")
 	}
-	gpuName := "GPU"
+	gpuName := gpuLabel
 	if n := len(m.gpus.Procs); n > 0 {
 		gpuName += " " + strconv.Itoa(n)
 	}

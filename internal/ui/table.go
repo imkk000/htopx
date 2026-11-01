@@ -12,6 +12,8 @@ import (
 	"github.com/imkk000/htopx/internal/sysinfo"
 )
 
+const gpuLabel = "GPU"
+
 type sortKey int
 
 const (
@@ -121,7 +123,7 @@ var (
 		}
 		return kbytesCell(r.gpu.MemUsed/1024, p)
 	}}
-	colGPUIdx = column{"GPU", 3, true, sortGPUIdx, false, func(r row, _ painter) string {
+	colGPUIdx = column{gpuLabel, 3, true, sortGPUIdx, false, func(r row, _ painter) string {
 		if r.gpu == nil {
 			return ""
 		}
