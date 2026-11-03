@@ -23,6 +23,7 @@ type CPUUsage struct {
 type MemInfo struct {
 	Total, Free, Used, Buffers, Cache, Shared uint64
 	SwapTotal, SwapUsed, SwapCache            uint64
+	ZramData, ZramRAM                         uint64
 }
 
 type LoadAvg [3]float64

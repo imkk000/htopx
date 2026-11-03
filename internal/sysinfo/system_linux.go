@@ -3,6 +3,7 @@ package sysinfo
 import (
 	"bytes"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -72,7 +73,27 @@ func (*platform) memInfo() (MemInfo, error) {
 	if swapUsed := vals["SwapFree"] + m.SwapCache; m.SwapTotal > swapUsed {
 		m.SwapUsed = m.SwapTotal - swapUsed
 	}
+	m.ZramData, m.ZramRAM = zramUsage()
 	return m, nil
+}
+
+func zramUsage() (data, ram uint64) {
+	paths, _ := filepath.Glob("/sys/block/zram*/mm_stat")
+	for _, p := range paths {
+		b, err := os.ReadFile(p)
+		if err != nil {
+			continue
+		}
+		f := strings.Fields(string(b))
+		if len(f) < 3 {
+			continue
+		}
+		d, _ := strconv.ParseUint(f[0], 10, 64)
+		r, _ := strconv.ParseUint(f[2], 10, 64)
+		data += d / 1024
+		ram += r / 1024
+	}
+	return data, ram
 }
 
 func (*platform) loadAvg() LoadAvg {

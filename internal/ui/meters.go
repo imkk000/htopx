@@ -92,11 +92,17 @@ func memMeter(width int, m sysinfo.MemInfo) string {
 }
 
 func swapMeter(width int, m sysinfo.MemInfo) string {
+	disk := m.SwapUsed - min(m.ZramData, m.SwapUsed)
 	segs := []segment{
-		{ratio(m.SwapUsed, m.SwapTotal), cRed},
+		{ratio(m.ZramData, m.SwapTotal), cMagenta},
+		{ratio(disk, m.SwapTotal), cRed},
 		{ratio(m.SwapCache, m.SwapTotal), cYellow},
 	}
-	return meter("Swp", 3, width, segs, humanKiB(m.SwapUsed)+"/"+humanKiB(m.SwapTotal))
+	text := humanKiB(m.SwapUsed) + "/" + humanKiB(m.SwapTotal)
+	if m.ZramData > 0 {
+		text += " z" + humanKiB(m.ZramRAM)
+	}
+	return meter("Swp", 3, width, segs, text)
 }
 
 func gpuMeters(kind gpu.Kind, width int, d gpu.Device) [3]string {
